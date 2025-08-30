@@ -6,6 +6,7 @@ import rclpy
 from rclpy.node import Node
 
 from std_msgs.msg import String
+from geometry_msgs.msg import Twist
 
 class FingerState(Enum):
     FOLDED = 0
@@ -23,11 +24,13 @@ class GestureDetector(Node):
 
     def __init__(self):
         super().__init__('gesture_detector')
+
+        self.vel_publisher = self.create_publisher(Twist, 'cmd_vel', 10)
         
         self.mp_hands = mp.solutions.hands
         self.mp_drawing = mp.solutions.drawing_utils
 
-        self.hands = mp_hands.Hands(
+        self.hands = self.mp_hands.Hands(
             static_image_mode=False,
             max_num_hands=1,
             min_detection_confidence=0.7,
@@ -61,8 +64,7 @@ class GestureDetector(Node):
         return state, direction
 
     def detect_gestures(self):
-        # Open webcam
-        cap = cv2.VideoCapture(0)  # 0 = default webcam
+        cap = cv2.VideoCapture(0)
 
         while cap.isOpened():
             success, frame = cap.read()
@@ -84,7 +86,13 @@ class GestureDetector(Node):
                     self.mp_drawing.draw_landmarks(
                         frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
                     state, direction = self.index_finger_status(hand_landmarks, frame)
-                    self.get_logger().info('Publishing: "%s"' % direction)
+                    self.get_logger().info('Index finger is %s' % state)
+
+                    vel_msg = Twist()
+                    if state == FingerState.EXTENDED:
+                        vel_msg.linear.x = 0.25
+                    
+                    self.vel_publisher.publish(vel_msg)
 
             # Show frame
             cv2.imshow("MediaPipe Hands", frame)
