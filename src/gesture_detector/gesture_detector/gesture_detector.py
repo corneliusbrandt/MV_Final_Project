@@ -90,7 +90,7 @@ class GestureDetector(Node):
 
                     vel_msg = Twist()
                     if state == FingerState.EXTENDED:
-                        vel_msg.linear.x = 0.25
+                        vel_msg.linear.x = 0.20
                     
                     self.vel_publisher.publish(vel_msg)
 
