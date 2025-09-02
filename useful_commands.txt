@@ -1,5 +1,5 @@
 # Build docker container
-docker build -t ros2-humble .
+docker build -t gesturebot .
 
 # Start docker container
 docker run -it --rm \
@@ -12,10 +12,40 @@ docker run -it --rm \
     --group-add=$(getent group video | cut -d: -f3) \
     --network=host \
     --name "gesturebot" \
-    ros2-humble:latest
+    gesturebot:latest
 
 # Open running container in new terminal
 docker exec -it gesturebot /bin/bash
+
+# Launch teleop
+ros2 run turtlebot3_teleop teleop_keyboard
+
+# Launch gazebo world
+ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
+
+# Launch SLAM
+ros2 launch turtlebot3_cartographer cartographer.launch.py use_sim_time:=True
+
+# Launch nav2
+ros2 launch turtlebot3_navigation2 navigation2.launch.py use_sim_time:=True map:=<path_to_map>.yaml
+
+# Save map
+ros2 run nav2_map_server map_saver_cli -f <path_to_save_map>/map_name
+
+# Manipulation launch gazebo
+ros2 launch turtlebot3_manipulation_gazebo gazebo.launch.py
+
+# Manipulation launch gazebo + rviz
+ros2 launch turtlebot3_manipulation_gazebo gazebo.launch.py start_rviz:=true
+
+# Manipulation MoveIt servo
+ros2 launch turtlebot3_manipulation_moveit_config servo.launch.py
+
+# Manipulation teleop
+ros2 run turtlebot3_manipulation_teleop turtlebot3_manipulation_teleop
+
+# Manipulation nav2
+ros2 launch turtlebot3_manipulation_navigation2 navigation2.launch.py map_yaml_file:=<path_to_map>.yaml
 
 # Download dependencies using rosdep 
 rosdep install --from-paths src -i -y
