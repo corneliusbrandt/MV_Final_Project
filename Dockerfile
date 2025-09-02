@@ -89,10 +89,10 @@ RUN cd ~/turtlebot3_ws \
 RUN sudo apt install ros-humble-dynamixel-sdk ros-humble-ros2-control ros-humble-ros2-controllers ros-humble-gripper-controllers ros-humble-moveit* -y
 RUN cd ~/turtlebot3_ws/src/ \
     && source /opt/ros/humble/setup.bash \
-    && git clone -b humble https://github.com/ROBOTIS-GIT/turtlebot3_manipulation.git \
+    && git clone -b humble-devel https://github.com/ROBOTIS-GIT/turtlebot3_manipulation.git \
     && cd ~/turtlebot3_ws \
     && colcon build --symlink-install
 
 WORKDIR /home/$USERNAME/$PROJECT_PATH
 
-CMD /bin/bash -c "cd ~/$PROJECT_PATH && rosdep init || true && rosdep update && rosdep install --from-paths src -i -y && source install/setup.bash && /bin/bash -i"
+CMD /bin/bash -c "cd ~/$PROJECT_PATH && rosdep init || true && rosdep update && rosdep install --from-paths src -i -y && colcon build --symlink-install ; source install/setup.bash ; /bin/bash -i"
