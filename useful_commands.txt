@@ -1,0 +1,21 @@
+# Build docker container
+docker build -t ros2-humble .
+
+# Start docker container
+docker run -it --rm \
+    --env="DISPLAY" \
+    --env="QT_X11_NO_MITSHM=1" \
+    --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+    -v '/home/fynn/UiA/Machine Vision/gesturebot_ws':'/home/robo/gesturebot_ws' \
+    --device=/dev/dri:/dev/dri \
+    --device=/dev/video0:/dev/video0 \
+    --group-add=$(getent group video | cut -d: -f3) \
+    --network=host \
+    --name "gesturebot" \
+    ros2-humble:latest
+
+# Open running container in new terminal
+docker exec -it gesturebot /bin/bash
+
+# Download dependencies using rosdep 
+rosdep install --from-paths src -i -y
