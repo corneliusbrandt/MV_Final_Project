@@ -13,12 +13,11 @@ class FingerState(Enum):
     EXTENDED = 1
 
 class Direction(Enum):
-    LEFT = 0
-    RIGHT = 1
-    UP = 2
-    DOWN = 3
-    STOP = 4
-    NONE = 5
+    FORWARD = 0
+    STOP = 1
+    LEFT = 2
+    RIGHT = 3
+    NONE = 4
 
 class GestureDetector(Node):
 
@@ -30,9 +29,10 @@ class GestureDetector(Node):
         self.mp_hands = mp.solutions.hands
         self.mp_drawing = mp.solutions.drawing_utils
 
+        # Define parameters for MediaPipe Hands
         self.hands = self.mp_hands.Hands(
             static_image_mode=False,
-            max_num_hands=1,
+            max_num_hands=2,
             min_detection_confidence=0.7,
             min_tracking_confidence=0.5
         )
@@ -62,6 +62,34 @@ class GestureDetector(Node):
                 direction = Direction.DOWN if dy > 0 else Direction.UP
 
         return state, direction
+    
+    def detect_commands(self, hand_landmarks):
+        lm = hand_landmarks.landmark
+        fingers = []
+        direction = Direction.NONE
+
+        if lm[4].x > lm[3].x:
+            fingers.append(1)
+        else:
+            fingers.append(0)
+        
+        for finger in [8, 12, 16, 20]:
+            if lm[finger].y < lm[finger -1].y:
+                fingers.append(1)
+            else:
+                fingers.append(0)
+
+        # [thumb, index, middle, ring, pinky]
+        if fingers == [0, 1, 0, 0, 0]:
+            direction = Direction.FORWARD
+        elif fingers == [0, 0, 0, 0, 0]:
+            direction = Direction.STOP
+        elif fingers == [0, 1, 1, 1, 1]:
+            direction = Direction.LEFT
+        elif fingers == [1, 0, 0, 0, 0]:
+            direction = Direction.RIGHT
+
+        return direction
 
     def detect_gestures(self):
         cap = cv2.VideoCapture(0)
@@ -69,6 +97,7 @@ class GestureDetector(Node):
         while cap.isOpened():
             success, frame = cap.read()
             if not success:
+                self.get_logger().info("Camera could not be opened.")
                 break
 
             # Flip horizontally for a mirror view
@@ -85,12 +114,20 @@ class GestureDetector(Node):
                 for hand_landmarks in result.multi_hand_landmarks:
                     self.mp_drawing.draw_landmarks(
                         frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
-                    state, direction = self.index_finger_status(hand_landmarks, frame)
-                    self.get_logger().info('Index finger is %s' % state)
+                    # Call gesture detection function
+                    direction = self.detect_commands(hand_landmarks)
+                    self.get_logger().info('Hand gesture detected: %s' % direction)
 
+                    # Publish velocity command based on gesture
                     vel_msg = Twist()
-                    if state == FingerState.EXTENDED:
+                    if direction == Direction.FORWARD:
                         vel_msg.linear.x = 0.20
+                    elif direction == Direction.STOP:
+                        vel_msg.linear.x = 0.0
+                    elif direction == Direction.LEFT:
+                        vel_msg.angular.z = 0.5
+                    elif direction == Direction.RIGHT:
+                        vel_msg.angular.z = -0.5
                     
                     self.vel_publisher.publish(vel_msg)
 
