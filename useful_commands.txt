@@ -17,8 +17,17 @@ docker run -it --rm \
 # Open running container in new terminal
 docker exec -it gesturebot /bin/bash
 
-# Launch teleop
+# Launch robot without arm
+ros2 launch turtlebot3_bringup robot.launch.py
+
+# Launch teleop without arm
 ros2 run turtlebot3_teleop teleop_keyboard
+
+# Launch robot with arm 
+ros2 launch turtlebot3_manipulation_bringup hardware.launch.py
+
+# Launch teleop with arm 
+ros2 run turtlebot3_manipulation_teleop turtlebot3_manipulation_teleop
 
 # Launch gazebo world
 ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py

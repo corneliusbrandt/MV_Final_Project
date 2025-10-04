@@ -109,6 +109,7 @@ class GestureDetector(Node):
             # Process frame with MediaPipe
             result = self.hands.process(rgb_frame)
 
+            vel_msg = Twist()
             # Draw landmarks
             if result.multi_hand_landmarks:
                 for hand_landmarks in result.multi_hand_landmarks:
@@ -116,12 +117,12 @@ class GestureDetector(Node):
                         frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
                     # Call gesture detection function
                     direction = self.detect_commands(hand_landmarks)
-                    self.get_logger().info('Hand gesture detected: %s' % direction)
+                    self.get_logger().info('Hand gesture detected NEW: %s' % direction)
 
                     # Publish velocity command based on gesture
-                    vel_msg = Twist()
+                    
                     if direction == Direction.FORWARD:
-                        vel_msg.linear.x = 0.20
+                        vel_msg.linear.x = 0.15
                     elif direction == Direction.STOP:
                         vel_msg.linear.x = 0.0
                     elif direction == Direction.LEFT:
@@ -129,7 +130,7 @@ class GestureDetector(Node):
                     elif direction == Direction.RIGHT:
                         vel_msg.angular.z = -0.5
                     
-                    self.vel_publisher.publish(vel_msg)
+            self.vel_publisher.publish(vel_msg)
 
             # Show frame
             cv2.imshow("MediaPipe Hands", frame)

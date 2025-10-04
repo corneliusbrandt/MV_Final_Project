@@ -6,7 +6,7 @@ ARG USERNAME=robo
 
 ENV ROS_DOMAIN_ID=30
 ENV TURTLEBOT3_MODEL=waffle_pi
-ENV RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+# ENV RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 
 ENV PROJECT_PATH=gesturebot_ws
 
@@ -65,15 +65,7 @@ RUN cd ~/turtlebot3_ws \
 RUN cd ~/turtlebot3_ws \ 
     && source /opt/ros/humble/setup.bash && colcon build --packages-select turtlebot3_node --symlink-install --parallel-workers 1
 
-# .bashrc
-
-RUN echo 'source ~/turtlebot3_ws/install/setup.bash' >> ~/.bashrc
-# RUN echo 'export ROS_DOMAIN_ID=$ROS_DOMAIN_ID #TURTLEBOT3' >> ~/.bashrc
-# RUN echo 'export TURTLEBOT3_MODEL=$TURTLEBOT3_MODEL' >> ~/.bashrc
-RUN echo 'source /usr/share/gazebo/setup.sh' >> ~/.bashrc
-RUN echo 'source /opt/ros/humble/setup.bash' >> ~/.bashrc
-
-# Simulation Setup
+# turtlebot3 simulation Setup
 
 RUN cd ~/turtlebot3_ws/src/ \ 
     && git clone -b humble https://github.com/ROBOTIS-GIT/turtlebot3_simulations.git
@@ -84,7 +76,7 @@ RUN cd ~/turtlebot3_ws \
 RUN cd ~/turtlebot3_ws \ 
     && source /opt/ros/humble/setup.bash && colcon build --symlink-install --parallel-workers 1
 
-# Manipulation Setup
+# turtlebot3 manipulation Setup
 
 RUN sudo apt install ros-humble-dynamixel-sdk ros-humble-ros2-control ros-humble-ros2-controllers ros-humble-gripper-controllers ros-humble-moveit* -y
 RUN cd ~/turtlebot3_ws/src/ \
@@ -93,6 +85,14 @@ RUN cd ~/turtlebot3_ws/src/ \
     && cd ~/turtlebot3_ws \
     && colcon build --symlink-install
 
+# .bashrc
+
+RUN echo 'source ~/turtlebot3_ws/install/setup.bash' >> ~/.bashrc
+RUN echo 'source /usr/share/gazebo/setup.sh' >> ~/.bashrc
+RUN echo 'source /opt/ros/humble/setup.bash' >> ~/.bashrc
+
+# 
+
 WORKDIR /home/$USERNAME/$PROJECT_PATH
 
-CMD /bin/bash -c "cd ~/$PROJECT_PATH && rosdep init || true && rosdep update && rosdep install --from-paths src -i -y && colcon build --symlink-install ; source install/setup.bash ; /bin/bash -i"
+CMD /bin/bash -c "cd ~/$PROJECT_PATH && rosdep init ; rosdep update && rosdep install --from-paths src -i -y && colcon build --symlink-install ; source install/setup.bash ; /bin/bash -i"
