@@ -14,22 +14,22 @@ This is what will be mounted in the 'volumes' directive!
 Now run the following in the terminal of your choice:
 
 1. ```bash
-    docker-compose build
+    sudo docker compose build
     ```
 
 2. ```bash
-    docker-compose up -d
+    sudo docker compose up -d
     ```
 
 3. ```bash
-    docker-compose exec gesturebot bash
+    sudo docker compose exec gesturebot bash
     ```
 
 ### What do these commands do?
 
 1. Builds (or rebuilds) the Docker Image service defined in the Docker Compose file
 
-2. Pulls the image into the compose commands and starts the container. `-d` makes the container run in a fetached mode, making it run in the background instead of taking up the entire terminal. To check the running services use `docker-compose ps` or to follow the output logs use `docker-compose logs`. 
+2. Pulls the image into the compose commands and starts the container. `-d` makes the container run in a fetached mode, making it run in the background instead of taking up the entire terminal. To check the running services use `sudo docker compose ps` or to follow the output logs use `sudo docker compose logs`. 
 
 3. This command is used to run a specific command inside a running container managed by Docker Compose. This activates an interactive shell from within the running container which can run ROS2 commands. 
 
@@ -47,5 +47,5 @@ source install/setup.bash
 Simply run the following to shut down the container:
 
 ```bash
-docker-compose down
+sudo docker compose down
 ```
