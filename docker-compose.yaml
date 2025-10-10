@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Defines the entire Gesturebot service container
   gesturebot:
