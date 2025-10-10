@@ -41,3 +41,11 @@ source /opt/ros/humble/setup.bash
 colcon build --symlink-install
 source install/setup.bash
 ```
+
+## Finished?
+
+Simply run the following to shut down the container:
+
+```bash
+docker-compose down
+```
