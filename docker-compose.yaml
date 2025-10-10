@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # Defines the entire Gesturebot service container
+  gesturebot:
+    # Tells Docker Compose to build the image from the Dockerfile in the current directory
+    build:
+      context: .
+    image: gesturebot-project
+
+    # This is the most important line! It connects the container directly to your the host network!!
+    # Should fix ROS2 not picking up ROS Nodes on network
+    network_mode: "host"
+
+    # Grant the container extended privileges, needed for accessing hardware or graphics.
+    privileged: true
+    
+    # Mount local project code into the container.
+    # This allows us to edit code on our machines and run it instantly in the container without rebuilding.
+    # Assumes the ROS2 workspace is in a folder named 'gesturebot_ws' next to our Dockerfile. If not we must make it.
+    volumes:
+      - ./gesturebot_ws:/home/robo/gesturebot_ws
+
+      # Set environment variables here:
+    environment:
+      - ROS_DOMAIN_ID=30
+      - TURTLEBOT3_MODEL=waffle_pi
+      # This is crucial for running GUI applications like Gazebo or RViz from the container
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+
+    # Keep the container running in the background
+    # The 'command' overrides the Dockerfile's CMD. We'll start a long-running process
+    # and then 'exec' into it to run commands.
+    command: tail -f /dev/null
