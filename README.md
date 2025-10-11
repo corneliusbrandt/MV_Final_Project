@@ -1,16 +1,48 @@
 
-# Instructions on how to run project (test)
+# GestureBot ROS 2 Project (test)
 
-## Install docker
+This project utilizes ROS 2 Humble within a Docker container to host a gesture detection node that controls a simulated or physical TurtleBot3 Waffle Pi robot (hopefully).
 
-Install docker from the official webpage by following their tutorials for your specific OS: 
-[Docker Install](https://docs.docker.com/engine/install/).
+## Prerequisites
 
-## Utilize Docker Compose to run the program
+1. __Docker & Docker Compose__: Must be installed and running on your host machine.
 
-### (We need to define workspace and name, what volumes do we need?)
+    * Install docker from the official webpage by following their tutorials for your specific OS: [Docker Install](https://docs.docker.com/engine/install/).
 
-Now run the following in the terminal of your choice:
+2. __Clone project__: Clone the project repository to somewhere on your PC using `git clone https://github.com/corneliusbrandt/MV_Final_Project.gi`
+
+3. __Project Structure__: Ensure your local workspace folder (`gesturebot_ws`) is in the same directory as the `Dockerfile` and `docker-compose.yaml` file.
+    * This should already be preset as part of cloning the repository
+4. __Robot__: For physical testing the TurtleBot3 SBC (Single Board Computer), the Raspberry Pi, must be powered on and connected to the same local network as the host machine running this code.
+    * Ensure ROS2 Humble is installed on the TurtleBot and that the TurtleBot ROS2 envrionments match the Docker Compose envrionments:
+        - ROS_DOMAIN_ID=30
+        - TURTLEBOT3_MODEL=waffle_pi
+
+## Setting up TurtleBot3 instructions
+
+To control the physical robot, the TurtleBot3's Single Board Computer (SBC) must be configured to receive the commands published by your container.
+
+1. __Ensure the robot and the application host machine are on the same network!__
+
+2. __Environment setup__: Log into the robot (e.g., via SSH) and ensure the ROS Domain ID matches the container:
+
+```bash
+# Set the same communication channel as the Docker container
+export ROS_DOMAIN_ID=30 
+
+# Source the necessary ROS setup files on the robot
+source /opt/ros/humble/setup.bash
+source ~/temp_tb3_ws/install/setup.bash
+
+```
+
+3. __Launch Robot Bringup__: Run the low-level node to enable motor and sensor communication:
+
+```bash
+ros2 launch turtlebot3_node robot.launch.py
+```
+
+## Running project instructions
 
 1. ```bash
     sudo docker compose build
@@ -36,10 +68,19 @@ Now run the following in the terminal of your choice:
 
 ```bash
 cd ~/gesturebot_ws
-source /opt/ros/humble/setup.bash
-colcon build --symlink-install
+rosdep install --from-paths src -i -y && colcon build --symlink-install
 source install/setup.bash
 ```
+
+This will source the necessary setup scripts to allow the gesture detector to run.
+
+```bash
+ros2 run gesture_detector gesture_detector
+```
+
+This will start the actual python script and open your webcam. Enjoy! See the report for the gesture mapping!
+
+### Gestures? Link to pdf in repository docs??
 
 ## Finished?
 
@@ -48,3 +89,4 @@ Simply run the following to shut down the container:
 ```bash
 sudo docker compose down
 ```
+
