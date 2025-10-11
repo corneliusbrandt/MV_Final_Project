@@ -8,8 +8,7 @@ Install docker from the official webpage by following their tutorials for your s
 
 ## Utilize Docker Compose to run the program
 
-First things first, make sure the project ROS2 workspace is in a folder named `/gesturebot_ws` next to the Dockerfile.
-This is what will be mounted in the 'volumes' directive!
+### (We need to define workspace and name, what volumes do we need?)
 
 Now run the following in the terminal of your choice:
 
