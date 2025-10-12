@@ -76,6 +76,12 @@ ros2 run gesture_detector gesture_detector
 
 This will start the actual python script and (hopefully) open your webcam. Enjoy! See the report for the gesture mapping!
 
+### Problems? 
+
+If you're running the application through WSL or other virtual machine or environments, make sure the webcam is exposed to the application!
+
+- ___WSL2___: Make sure to expose the webcam to WSL by following the steps in this link: [USBIPD](https://learn.microsoft.com/en-us/windows/wsl/connect-usb).
+     1. 
 ### Gestures? Link to pdf in repository docs??
 
 ## Finished?
