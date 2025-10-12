@@ -9,7 +9,7 @@ This project utilizes ROS 2 Humble within a Docker container to host a gesture d
 
     * Install docker from the official webpage by following their tutorials for your specific OS: [Docker Install](https://docs.docker.com/engine/install/).
 
-2. __Clone project__: Clone the project repository to somewhere on your PC using `git clone https://github.com/corneliusbrandt/MV_Final_Project.gi`
+2. __Clone project__: Clone the project repository to somewhere on your PC using `git clone https://github.com/corneliusbrandt/MV_Final_Project.git`
 
 3. __Project Structure__: Ensure your local workspace folder (`gesturebot_ws`) is in the same directory as the `Dockerfile` and `docker-compose.yaml` file.
     * This should already be preset as part of cloning the repository
@@ -28,7 +28,10 @@ To control the physical robot, the TurtleBot3's Single Board Computer (SBC) must
 
 ```bash
 # Set the same communication channel as the Docker container
-export ROS_DOMAIN_ID=30 
+export ROS_DOMAIN_ID=30
+
+# Set the same TurtleBot3 type as the Docker container
+export TURTLEBOT3_MODEL=waffle_pi
 
 # Source the necessary ROS setup files on the robot
 source /opt/ros/humble/setup.bash
