@@ -48,29 +48,22 @@ ros2 launch turtlebot3_node robot.launch.py
 ## Running project instructions
 
 1. ```bash
-    sudo docker compose build
+    sudo docker compose build && sudo docker compose up -d
     ```
-
 2. ```bash
-    sudo docker compose up -d
-    ```
-
-3. ```bash
     sudo docker compose exec gesturebot bash
     ```
 
 ### What do these commands do?
 
-1. Builds (or rebuilds) the Docker Image service defined in the Docker Compose file
-
-2. Pulls the image into the compose commands and starts the container. `-d` makes the container run in a fetached mode, making it run in the background instead of taking up the entire terminal. To check the running services use `sudo docker compose ps` or to follow the output logs use `sudo docker compose logs`. 
+1. Builds (or rebuilds) the Docker Image service defined in the Docker Compose file, then pulls the image into the compose commands and starts the container. `-d` makes the container run in a detached mode, making it run in the background instead of taking up the entire terminal. To check the running services use `sudo docker compose ps` or to follow the output logs use `sudo docker compose logs`. 
 
 3. This command is used to run a specific command inside a running container managed by Docker Compose. This activates an interactive shell from within the running container which can run ROS2 commands. 
 
 ## Run commands from project Docker Image 
 
 ```bash
-cd ~/gesturebot_ws
+rosdep update
 rosdep install --from-paths src -i -y && colcon build --symlink-install
 source install/setup.bash
 ```
@@ -81,7 +74,7 @@ This will source the necessary setup scripts to allow the gesture detector to ru
 ros2 run gesture_detector gesture_detector
 ```
 
-This will start the actual python script and open your webcam. Enjoy! See the report for the gesture mapping!
+This will start the actual python script and (hopefully) open your webcam. Enjoy! See the report for the gesture mapping!
 
 ### Gestures? Link to pdf in repository docs??
 
