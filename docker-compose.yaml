@@ -12,7 +12,8 @@ services:
 
     # Grant the container extended privileges, needed for accessing hardware or graphics.
     privileged: true
-    
+    devices:
+      - "/dev/video0:/dev/video0"
     # Mount local project code into the container.
     # This allows us to edit code on our machines and run it instantly in the container without rebuilding.
     # Assumes the ROS2 workspace is in a folder named 'gesturebot_ws' next to our Dockerfile. If not we must make it.
