@@ -41,14 +41,12 @@ RUN apt install git -y
 RUN adduser --disabled-password --gecos "" $USERNAME \
     # Temp removed to check for camera usage
     # && usermod -aG sudo $USERNAME \
-    && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+    && groupadd -f video \
+    && usermod -aG video $USERNAME
 
 USER $USERNAME
 WORKDIR /home/$USERNAME
-
-# Add the video group (it might not exist) and add the user to it
-RUN groupadd -f video
-RUN usermod -aG video $USERNAME
 
 # turtlebot3
 
@@ -102,6 +100,7 @@ RUN echo 'source /opt/ros/humble/setup.bash' >> ~/.bashrc
 WORKDIR /home/$USERNAME/$PROJECT_PATH
 
 CMD /bin/bash -c "cd ~/$PROJECT_PATH && rosdep init ; rosdep update && rosdep install --from-paths src -i -y && colcon build --symlink-install ; source install/setup.bash ; /bin/bash -i"
+
 
 
 
