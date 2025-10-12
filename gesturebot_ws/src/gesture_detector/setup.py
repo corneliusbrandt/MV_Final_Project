@@ -20,8 +20,6 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'talker = gesture_detector.publisher_member_function:main',
-            'listener = gesture_detector.subscriber_member_function:main',
             'gesture_detector = gesture_detector.gesture_detector:main',
         ],
     },
