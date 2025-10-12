@@ -4,32 +4,39 @@ SHELL ["/bin/bash", "-c"]
 
 ARG USERNAME=robo
 
-# Environment Variables
 ENV ROS_DOMAIN_ID=30
 ENV TURTLEBOT3_MODEL=waffle_pi
+# ENV RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+
 ENV PROJECT_PATH=gesturebot_ws
-ENV TURTLEBOT_WS=temp_tb3_ws
+
 ENV DEBIAN_FRONTEND=noninteractive
 
-# ALL system dependencies
-RUN apt update -y && apt upgrade -y && apt install -y \
-    ros-humble-navigation2 \
-    ros-humble-nav2-bringup \
-    ros-humble-gazebo-* \
-    ros-humble-cartographer \
-    ros-humble-cartographer-ros \
-    ros-humble-dynamixel-sdk \
-    ros-humble-ros2-control \
-    ros-humble-ros2-controllers \
-    ros-humble-gripper-controllers \
-    ros-humble-moveit* \
-    python3-colcon-common-extensions \
-    vim wget xpra x11-utils mesa-utils git python3-pip sudo adduser
+RUN apt update -y 
+RUN apt upgrade -y
 
-# Mediapipe and OpenCV
-RUN pip install mediapipe opencv-python
+# ROS packages
 
-# User Setup
+RUN apt install ros-humble-navigation2 -y
+RUN apt install ros-humble-nav2-bringup -y
+RUN apt install ros-humble-gazebo-* -y
+RUN apt install ros-humble-cartographer -y
+RUN apt install ros-humble-cartographer-ros -y
+
+# Misc packages
+
+RUN apt install sudo -y
+RUN apt install adduser -y
+RUN apt install vim -y
+RUN apt install wget -y
+RUN apt install xpra -y
+RUN apt install x11-utils -y
+RUN apt install mesa-utils -y
+RUN apt install python3-pip -y
+RUN apt install git -y
+
+# User
+
 RUN adduser --disabled-password --gecos "" $USERNAME \
     && usermod -aG sudo $USERNAME \
     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
@@ -37,24 +44,55 @@ RUN adduser --disabled-password --gecos "" $USERNAME \
 USER $USERNAME
 WORKDIR /home/$USERNAME
 
-# HIGHLY condensed TurtleBot3 Setup, Sourcing, Cloning and Building
-RUN source /opt/ros/humble/setup.bash && mkdir -p ~/$TURTLEBOT_WS/src \
-    && cd ~/$TURTLEBOT_WS/src/ \
-    && git clone -b humble https://github.com/ROBOTIS-GIT/DynamixelSDK.git \
-    && git clone -b humble https://github.com/ROBOTIS-GIT/turtlebot3_msgs.git \
-    && git clone -b humble https://github.com/ROBOTIS-GIT/turtlebot3.git \
-    && git clone -b humble https://github.com/ROBOTIS-GIT/turtlebot3_simulations.git \
+# turtlebot3
+
+RUN source /opt/ros/humble/setup.bash
+RUN mkdir -p ~/turtlebot3_ws/src
+
+RUN cd ~/turtlebot3_ws/src/ \
+    && git clone -b humble https://github.com/ROBOTIS-GIT/DynamixelSDK.git
+RUN cd ~/turtlebot3_ws/src/ \ 
+    && git clone -b humble https://github.com/ROBOTIS-GIT/turtlebot3_msgs.git
+RUN cd ~/turtlebot3_ws/src/ \ 
+    && git clone -b humble https://github.com/ROBOTIS-GIT/turtlebot3.git
+
+RUN sudo apt install python3-colcon-common-extensions
+
+RUN cd ~/turtlebot3_ws \ 
+    && source /opt/ros/humble/setup.bash && colcon build --packages-select dynamixel_sdk --symlink-install --parallel-workers 1
+RUN cd ~/turtlebot3_ws \ 
+    && source /opt/ros/humble/setup.bash && colcon build --packages-select turtlebot3_msgs --symlink-install --parallel-workers 1
+RUN cd ~/turtlebot3_ws \ 
+    && source /opt/ros/humble/setup.bash && colcon build --packages-select turtlebot3_node --symlink-install --parallel-workers 1
+
+# turtlebot3 simulation Setup
+
+RUN cd ~/turtlebot3_ws/src/ \ 
+    && git clone -b humble https://github.com/ROBOTIS-GIT/turtlebot3_simulations.git
+
+RUN cd ~/turtlebot3_ws \ 
+    && source /opt/ros/humble/setup.bash && colcon build --packages-select turtlebot3_gazebo --symlink-install --parallel-workers 1
+
+RUN cd ~/turtlebot3_ws \ 
+    && source /opt/ros/humble/setup.bash && colcon build --symlink-install --parallel-workers 1
+
+# turtlebot3 manipulation Setup
+
+RUN sudo apt install ros-humble-dynamixel-sdk ros-humble-ros2-control ros-humble-ros2-controllers ros-humble-gripper-controllers ros-humble-moveit* -y
+RUN cd ~/turtlebot3_ws/src/ \
+    && source /opt/ros/humble/setup.bash \
     && git clone -b humble-devel https://github.com/ROBOTIS-GIT/turtlebot3_manipulation.git \
-    && cd ~/$TURTLEBOT_WS \
+    && cd ~/turtlebot3_ws \
     && colcon build --symlink-install
 
+# .bashrc
 
-# Sourcing
-RUN echo 'source /opt/ros/humble/setup.bash' >> ~/.bashrc \
-    && echo 'source /usr/share/gazebo/setup.sh' >> ~/.bashrc \
-    && echo "source /home/$USERNAME/$TURTLEBOT_WS/install/setup.bash" >> ~/.bashrc
+RUN echo 'source ~/turtlebot3_ws/install/setup.bash' >> ~/.bashrc
+RUN echo 'source /usr/share/gazebo/setup.sh' >> ~/.bashrc
+RUN echo 'source /opt/ros/humble/setup.bash' >> ~/.bashrc
 
+# 
 
 WORKDIR /home/$USERNAME/$PROJECT_PATH
 
-CMD /bin/bash -c "rosdep init ; rosdep update && rosdep install --from-paths src -i -y && colcon build --symlink-install ; source install/setup.bash ; /bin/bash -i"
+CMD /bin/bash -c "cd ~/$PROJECT_PATH && rosdep init ; rosdep update && rosdep install --from-paths src -i -y && colcon build --symlink-install ; source install/setup.bash ; /bin/bash -i"
