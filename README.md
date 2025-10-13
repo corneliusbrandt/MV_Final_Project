@@ -51,6 +51,7 @@ ros2 launch turtlebot3_node robot.launch.py
     # cd into the cloned repo
     cd MV_Final_Project/
     # build and start container
+    # !!! BUILDING THE CONTAINER IS VERY RESOURCE HEAVY AND THIS MIGHT HAVE TO BE THE ONLY THING RUNNING DEPENDING ON YOUR DEVICE OR IT WILL FREEZE (this can later be improved by removing simulation packages from the release) !!!
     sudo docker compose build && sudo docker compose up -d
     ```
 2. ```bash
