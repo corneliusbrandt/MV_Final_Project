@@ -48,6 +48,9 @@ ros2 launch turtlebot3_node robot.launch.py
 ## Running project instructions
 
 1. ```bash
+    # cd into the cloned repo
+    cd MV_Final_Project/
+    # build and start container
     sudo docker compose build && sudo docker compose up -d
     ```
 2. ```bash
@@ -63,6 +66,7 @@ ros2 launch turtlebot3_node robot.launch.py
 ## Run commands from project Docker Image 
 
 ```bash
+# make sure that you're in ~/gesturebot_ws/ when running these commands
 rosdep update
 rosdep install --from-paths src -i -y && colcon build --symlink-install
 source install/setup.bash
@@ -90,6 +94,7 @@ Currently it's not possible to run this application through WSL2 likely due to V
 Simply run the following to shut down the container:
 
 ```bash
+# make sure to exit the container shell using ctrl+d before running this
 sudo docker compose down
 ```
 
