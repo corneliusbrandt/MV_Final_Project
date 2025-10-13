@@ -8,7 +8,9 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 
-#include "motion_handler/msg/motion_command.hpp"
+#include <gesturebot_msgs/msg/arm_command.hpp>
+#include <gesturebot_msgs/msg/drive_command.hpp>
+#include <gesturebot_msgs/msg/gripper_command.hpp>
 
 using namespace std::chrono_literals;
 
@@ -22,17 +24,16 @@ class MotionHandler : public rclcpp::Node {
 private:
     using GripperCommand = control_msgs::action::GripperCommand;
     using GripperGoalHandle = rclcpp_action::ClientGoalHandle<GripperCommand>;
-    using MotionCommand = motion_handler::msg::MotionCommand;
 
     rclcpp::TimerBase::SharedPtr m_InitMoveGroupsTimer;
     rclcpp::TimerBase::SharedPtr m_InitGripperActionServerTimer;
     rclcpp_action::Client<GripperCommand>::SharedPtr m_GripperClient;
     std::shared_ptr<moveit::planning_interface::MoveGroupInterface> m_ArmGroup;
-    rclcpp::Subscription<MotionCommand>::SharedPtr m_MotionCmdSub;
+    rclcpp::Subscription<gesturebot_msgs::msg::GripperCommand>::SharedPtr m_MotionCmdSub;
 
 public:
     MotionHandler() : Node("motion_handler") {
-        m_MotionCmdSub = this->create_subscription<MotionCommand>(
+        m_MotionCmdSub = this->create_subscription<gesturebot_msgs::msg::GripperCommand>(
             "/motion_command", 10,
             std::bind(&MotionHandler::motionCallback, this, std::placeholders::_1));
 
@@ -67,7 +68,7 @@ public:
     }
 
 private:
-    void motionCallback(const MotionCommand::SharedPtr msg) {
+    void motionCallback(const gesturebot_msgs::msg::GripperCommand::SharedPtr msg) {
         if (msg->gripper_percentage > 100) {
             RCLCPP_WARN(get_logger(), "Invalid gripper percentage (%u) gripper will not be moved",
                         msg->gripper_percentage);
