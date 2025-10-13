@@ -25,25 +25,25 @@ private:
     using MotionCommand = motion_handler::msg::MotionCommand;
 
     rclcpp::TimerBase::SharedPtr m_InitMoveGroupsTimer;
+    rclcpp::TimerBase::SharedPtr m_InitGripperActionServerTimer;
     rclcpp_action::Client<GripperCommand>::SharedPtr m_GripperClient;
     std::shared_ptr<moveit::planning_interface::MoveGroupInterface> m_ArmGroup;
     rclcpp::Subscription<MotionCommand>::SharedPtr m_MotionCmdSub;
 
 public:
     MotionHandler() : Node("motion_handler") {
-        m_InitMoveGroupsTimer = this->create_wall_timer(
-            std::chrono::seconds(1), std::bind(&MotionHandler::initMoveGroups, this));
-
         m_MotionCmdSub = this->create_subscription<MotionCommand>(
             "/motion_command", 10,
             std::bind(&MotionHandler::motionCallback, this, std::placeholders::_1));
 
         m_GripperClient = rclcpp_action::create_client<control_msgs::action::GripperCommand>(
             this, "/gripper_controller/gripper_cmd");
-        while (!m_GripperClient->wait_for_action_server(std::chrono::seconds(1))) {
-            RCLCPP_INFO(get_logger(), "Waiting for gripper action server...");
-        }
-        RCLCPP_INFO(get_logger(), "Gripper action server connected.");
+
+        m_InitMoveGroupsTimer = this->create_wall_timer(
+            std::chrono::seconds(1), std::bind(&MotionHandler::initMoveGroups, this));
+
+        m_InitGripperActionServerTimer = this->create_wall_timer(
+            std::chrono::seconds(1), std::bind(&MotionHandler::initGripperActionServer, this));
     }
 
     void moveGripper(float position) {
@@ -85,6 +85,17 @@ private:
         m_ArmGroup = std::make_shared<moveit::planning_interface::MoveGroupInterface>(
             shared_from_this(), "arm");
         RCLCPP_INFO(get_logger(), "MoveIt interfaces initialized!");
+
+        m_InitMoveGroupsTimer->cancel();
+    }
+
+    void initGripperActionServer() {
+        if (!m_GripperClient->action_server_is_ready()) {
+            RCLCPP_INFO(get_logger(), "Waiting for gripper action server...");
+        } else {
+            RCLCPP_INFO(get_logger(), "Gripper action server connected.");
+            m_InitGripperActionServerTimer->cancel();
+        }
     }
 };
 
