@@ -13,6 +13,8 @@ find_package(gesturebot_msgs REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 add_executable(manipulation_handler src/manipulation_handler.cpp)
 ament_target_dependencies(manipulation_handler 
@@ -21,6 +23,8 @@ ament_target_dependencies(manipulation_handler
     moveit_ros_planning_interface
     rclcpp 
     std_msgs 
+    tf2
+    tf2_geometry_msgs
 )
 
 install(TARGETS

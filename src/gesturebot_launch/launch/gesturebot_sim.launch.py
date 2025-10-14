@@ -48,11 +48,13 @@ def generate_launch_description():
         Node(
             package='gesturebot_gestures',
             executable='gesture_detector',
+            parameters=[{'use_sim_time': True}],
             output='screen'
         ),
         Node(
             package='gesturebot_manipulation',
             executable='manipulation_handler',
+            parameters=[{'use_sim_time': True}],
             output='screen'
         )
     ])
