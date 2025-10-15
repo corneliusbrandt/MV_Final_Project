@@ -28,8 +28,6 @@ private:
     using GripperCommand = control_msgs::action::GripperCommand;
     using GripperGoalHandle = rclcpp_action::ClientGoalHandle<GripperCommand>;
 
-    rclcpp::TimerBase::SharedPtr m_ClockTimer;
-
     rclcpp::TimerBase::SharedPtr m_InitMoveGroupsTimer;
     rclcpp::TimerBase::SharedPtr m_InitGripperActionServerTimer;
 
@@ -63,22 +61,6 @@ public:
 
         m_InitGripperActionServerTimer = this->create_wall_timer(
             std::chrono::seconds(1), std::bind(&MotionHandler::initGripperActionServer, this));
-
-        // m_ClockTimer = this->create_wall_timer(std::chrono::seconds(1),
-        //                                        std::bind(&MotionHandler::pubClock, this));
-    }
-
-    void pubClock() {
-        rclcpp::Time now = get_clock()->now();
-        RCLCPP_INFO(get_logger(), "Clock: %f", now.seconds());
-        geometry_msgs::msg::PoseStamped current_pose = m_ArmGroup->getCurrentPose();
-        RCLCPP_INFO(get_logger(), "Arm Group current pose:");
-        RCLCPP_INFO(get_logger(), "  Position -> x: %.3f, y: %.3f, z: %.3f",
-                    current_pose.pose.position.x, current_pose.pose.position.y,
-                    current_pose.pose.position.z);
-        RCLCPP_INFO(get_logger(), "  Orientation -> x: %.3f, y: %.3f, z: %.3f, w: %.3f",
-                    current_pose.pose.orientation.x, current_pose.pose.orientation.y,
-                    current_pose.pose.orientation.z, current_pose.pose.orientation.w);
     }
 
     void moveGripper(float position) {
@@ -101,35 +83,7 @@ public:
         m_GripperClient->async_send_goal(goal_msg, send_goal_options);
     }
 
-    void moveArm(geometry_msgs::msg::Pose target_pose) {
-        moveit::planning_interface::MoveGroupInterface::Plan plan;
-        m_ArmGroup->setPoseTarget(target_pose);
-
-        if (m_ArmGroup->plan(plan) != moveit::core::MoveItErrorCode::SUCCESS) {
-            RCLCPP_WARN(get_logger(), "Motion could not be planned");
-            return;
-        }
-        RCLCPP_WARN(get_logger(), "Motion was planned successfully");
-
-        if (m_ArmGroup->execute(plan) != moveit::core::MoveItErrorCode::SUCCESS) {
-            RCLCPP_WARN(get_logger(), "Motion could not be executed");
-            return;
-        }
-        RCLCPP_INFO(get_logger(), "Motion was executed successfully");
-    }
-
 private:
-    void motionCallback(const gesturebot_msgs::msg::GripperCommand::SharedPtr msg) {
-        if (msg->gripper_percentage > 100) {
-            RCLCPP_WARN(get_logger(), "Invalid gripper percentage (%u) gripper will not be moved",
-                        msg->gripper_percentage);
-        } else {
-            float new_gripper_pos =
-                GRIPPER_MIN_POSITION + (msg->gripper_percentage * GRIPPER_POS_ONE_PERCENT);
-            moveGripper(new_gripper_pos);
-        }
-    }
-
     void armMotionCallback(const gesturebot_msgs::msg::ArmCommand::SharedPtr msg) {
         geometry_msgs::msg::Pose target_pose = msg->target_pose;
 
@@ -175,7 +129,16 @@ private:
 
     void driveMotionCallback(const gesturebot_msgs::msg::DriveCommand::SharedPtr msg) {}
 
-    void gripperMotionCallback(const gesturebot_msgs::msg::GripperCommand::SharedPtr msg) {}
+    void gripperMotionCallback(const gesturebot_msgs::msg::GripperCommand::SharedPtr msg) {
+        if (msg->gripper_percentage > 100) {
+            RCLCPP_WARN(get_logger(), "Invalid gripper percentage (%u) gripper will not be moved",
+                        msg->gripper_percentage);
+        } else {
+            float new_gripper_pos =
+                GRIPPER_MIN_POSITION + (msg->gripper_percentage * GRIPPER_POS_ONE_PERCENT);
+            moveGripper(new_gripper_pos);
+        }
+    }
 
     void initMoveGroups() {
         if (m_ArmGroup) return;

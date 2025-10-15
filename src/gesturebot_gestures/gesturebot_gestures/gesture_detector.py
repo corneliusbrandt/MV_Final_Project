@@ -1,12 +1,13 @@
 import cv2
-from enum import Enum
 import mediapipe as mp
-
+import numpy as np
 import rclpy
-from rclpy.node import Node
 
-from std_msgs.msg import String
+from enum import Enum
 from geometry_msgs.msg import Twist
+from gesturebot_msgs.msg import GripperCommand
+from rclpy.node import Node
+from std_msgs.msg import String
 
 class FingerState(Enum):
     FOLDED = 0
@@ -25,6 +26,7 @@ class GestureDetector(Node):
         super().__init__('gesture_detector')
 
         self.vel_publisher = self.create_publisher(Twist, 'cmd_vel', 10)
+        self.gripper_publisher = self.create_publisher(GripperCommand, 'gripper_motion', 10)
         
         self.mp_hands = mp.solutions.hands
         self.mp_drawing = mp.solutions.drawing_utils
@@ -38,6 +40,34 @@ class GestureDetector(Node):
         )
 
         self.detect_gestures()
+
+    def angle_between(self, v1, v2):
+        v1, v2 = np.array(v1), np.array(v2)
+        v1 /= np.linalg.norm(v1)
+        v2 /= np.linalg.norm(v2)
+        return np.degrees(np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0)))
+
+    def finger_curl(self, landmarks, ids):
+        mcp, pip, tip = [np.array([landmarks[i].x, landmarks[i].y, landmarks[i].z]) for i in ids]
+        v1 = pip - mcp
+        v2 = tip - pip
+        angle = self.angle_between(v1, v2)
+        
+        straight_deg = 180
+        bent_deg = 12
+        curl = np.clip((straight_deg - angle) / (straight_deg - bent_deg), 0, 1)
+        return curl
+
+    def hand_closure_ratio(self, landmarks):
+        fingers = {
+            'index': [5, 6, 8],
+            'middle': [9, 10, 12],
+            'ring': [13, 14, 16],
+            'pinky': [17, 18, 20],
+        }
+        curls = [self.finger_curl(landmarks, ids) for ids in fingers.values()]
+        return np.mean(curls)
+
 
     def index_finger_status(self, hand_landmarks, image):
         h, w, _ = image.shape
@@ -113,22 +143,32 @@ class GestureDetector(Node):
             # Draw landmarks
             if result.multi_hand_landmarks:
                 for hand_landmarks in result.multi_hand_landmarks:
+                    ratio = self.hand_closure_ratio(hand_landmarks.landmark)
+                    # self.get_logger().info(f"closure: {ratio:.2f}")
+
+                    gripper_msg = GripperCommand()
+                    gripper_msg.gripper_percentage = int(ratio * 100)
+                    self.get_logger().info(f"closure: {gripper_msg.gripper_percentage}")
+
+                    self.gripper_publisher.publish(gripper_msg)
+                    
+                    # # Call gesture detection function
+                    # direction = self.detect_commands(hand_landmarks)
+                    # self.get_logger().info('Hand gesture detected: %s' % direction)
+
+                    # # Publish velocity command based on gesture
+                    
+                    # if direction == Direction.FORWARD:
+                    #     vel_msg.linear.x = 0.15
+                    # elif direction == Direction.STOP:
+                    #     vel_msg.linear.x = 0.0
+                    # elif direction == Direction.LEFT:
+                    #     vel_msg.angular.z = 0.5
+                    # elif direction == Direction.RIGHT:
+                    #     vel_msg.angular.z = -0.5
+
                     self.mp_drawing.draw_landmarks(
                         frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
-                    # Call gesture detection function
-                    direction = self.detect_commands(hand_landmarks)
-                    self.get_logger().info('Hand gesture detected NEW: %s' % direction)
-
-                    # Publish velocity command based on gesture
-                    
-                    if direction == Direction.FORWARD:
-                        vel_msg.linear.x = 0.15
-                    elif direction == Direction.STOP:
-                        vel_msg.linear.x = 0.0
-                    elif direction == Direction.LEFT:
-                        vel_msg.angular.z = 0.5
-                    elif direction == Direction.RIGHT:
-                        vel_msg.angular.z = -0.5
                     
             self.vel_publisher.publish(vel_msg)
 
